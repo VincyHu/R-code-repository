@@ -1,0 +1,161 @@
+---
+title: "GameFun - AB testing analysis"
+author: "vincy hu"
+date: "5/19/2020"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+---------------------------------------------------------------------------------------------------
+
+# Import the Data
+
+```{r cars}
+library(readxl)
+library(tidyverse)
+library(dplyr)
+setwd("D:\\Quarter Three\\BAX 423\\Homework 1")
+data <- read_excel('GameFun.xlsx')
+```
+
+# Question one
+Before evaluating the effect of an experiment, it is important to make sure that the
+experiment was executed correctly. Check whether the test and control groups are
+probabilistically equivalent on their observables?
+
+## 1a
+More specific, compare the averages of the income, gender and gamer variables
+in the test and control groups. You should also report the % difference in the
+averages. Compute its statistical significance
+```{r}
+control <- filter(data,data$test == '0')
+exp <- filter(data,data$test == '1')
+#1a
+var.test(control$income, exp$income, ratio = 1, alternative = "two.sided")
+#Variance test fails, so the variance in these two group are not equal
+t.test(control$income, exp$income, alternative = "two.sided", mu = 0, paired = FALSE, var.equal = FALSE)
+#The result shows that there is not significance to reject the null hypothesis. So the average of the income is the same between the control and test group. 
+
+
+var.test(control$gender, exp$gender, ratio = 1, alternative = "two.sided")
+#Variance test fails, so the variance in these two group are not equal
+t.test(control$gender, exp$gender, alternative = "two.sided", mu = 0, paired = FALSE, var.equal = FALSE)
+#The result shows that there is not significance to reject the null hypothesis. So the average of the gender is the same between the control and test group. 
+
+var.test(control$gamer, exp$gamer, ratio = 1, alternative = "two.sided")
+#Variance test fails, so the variance in these two group are not equal
+t.test(control$gamer, exp$gamer, alternative = "two.sided", mu = 0, paired = FALSE, var.equal = FALSE)
+#The result shows that there is not significance to reject the null hypothesis. So the average of the gamer is the same between the control and test group. 
+
+
+
+```
+
+## 1b
+In this case, I would like to step back and evluate the business intuition for this experiment. This experiment wants to see the banners effect so it designs control and experiement test. To actually see the effectness of A/B testing, it requires to have the similar charterices people in the both control group and treatment group. So what is the baisc share charateircs of people who play games? I think to represent the whole picture of gamers, it is reasonable to inlcude income level, gender and the gamer
+So the above metric shows the average number in each category for both control and treatment group. It could mathmaticlly show that the control and treatment group match by comparing to the percentage of difference. 
+
+## 1c
+I would hold the experiment for now. If we find out there is a large differnece, we need to investage why there is a such a big difference between two groups. We need to check our randomized theory and see if the total number of people is large enough. According to the central limit theory, when the number is large enough, it tends to behavine like a normal dist. Therefore, we need to see if the normality fails in our control and treatment group. If it fails, the reason could be we do not include enough people in the experiment 
+
+
+## 1d
+We could perform cross-validation and chuck the large big dataset into individual units and perform the classic statistical significance test. 
+
+# Question Two
+```{r}
+#2a
+#Control Group
+all_control <- nrow(filter(control,control$purchase =='1'))/nrow(control)
+#Exp Group
+all_exp <- nrow(filter(exp,exp$purchase == '1'))/nrow(exp)
+#ABS %
+abs(all_control-all_exp)
+
+#2b
+#Male
+#Control Group
+Male_control <- nrow(filter(control,control$gender =='1' & control$purchase == '1'))/nrow(filter(control,control$gender =='1'))
+#Exp Group
+Male_exp <- nrow(filter(exp,exp$gender == '1'& exp$purchase == '1'))/nrow(filter(exp,exp$gender == '1'))
+#ABS %
+abs(Male_control-Male_exp)
+#FeMale
+#Control Group
+FeMale_control <- nrow(filter(control,control$gender =='0' & control$purchase == '1'))/nrow(filter(control,control$gender =='0'))
+#Exp Group
+FeMale_exp <- nrow(filter(exp,exp$gender == '0'& exp$purchase == '1'))/nrow(filter(exp,exp$gender == '0'))
+#ABS %
+abs(FeMale_control-FeMale_exp)
+
+#2c
+#Gamers
+#Control Group
+Gamer_control <- nrow(filter(control,control$purchase =='1' & control$gamer == '1'))/nrow(filter(control,control$gamer =='1'))
+#Exp Group
+Gamer_exp <- nrow(filter(exp,exp$purchase == '1'& exp$gamer == '1'))/nrow(filter(exp,exp$gamer == '1'))
+#ABS %
+abs(Gamer_control-Gamer_exp)
+
+#Non-Gamers
+#Control Group
+NoGamer_control <- nrow(filter(control,control$purchase =='1' & control$gamer == '0'))/nrow(filter(control,control$gamer =='0'))
+#Exp Group
+NoGamer_exp <- nrow(filter(exp,exp$purchase == '1'& exp$gamer == '0'))/nrow(filter(exp,exp$gamer == '0'))
+#ABS %
+abs(NoGamer_control-NoGamer_exp)
+
+#2d
+#Male Gamer
+#Control Group
+Male_Gamer_control <- nrow(filter(control,control$gender =='1' & control$gamer == '1' & control$purchase == '1'))/nrow(filter(control,control$gender =='1'& control$gamer == '1'))
+#Exp Group
+Male_Gamer_exp <- nrow(filter(exp,exp$gender == '1'& exp$gamer == '1' & exp$purchase == '1'))/nrow(filter(exp,exp$gamer == '1' & exp$gender == '1'))
+#ABS %
+abs(Male_Gamer_control-Male_Gamer_exp)
+
+#Female Gamer
+#Control Group
+FeMale_Gamer_control <- nrow(filter(control,control$gender =='0' & control$gamer == '1' & control$purchase == '1'))/nrow(filter(control,control$gender =='0' & control$gamer == '1'))
+#Exp Group
+FeMale_Gamer_exp <- nrow(filter(exp,exp$gender == '1'& exp$gamer == '1' & exp$purchase == '1'))/nrow(filter(exp,exp$gamer == '1' & exp$gender == '1'))
+#ABS %
+abs(FeMale_Gamer_control-FeMale_Gamer_exp)
+
+#Male NoGamer
+#Control Group
+Male_NoGamer_control <- nrow(filter(control,control$gender =='1' & control$gamer == '0' & control$purchase == '1'))/nrow(filter(control,control$gender =='1'& control$gamer == '0'))
+#Exp Group
+Male_NoGamer_exp <- nrow(filter(exp,exp$gender == '1'& exp$gamer == '0' & exp$purchase == '1'))/nrow(filter(exp,exp$gamer == '1' & exp$gender == '0'))
+#ABS %
+abs(Male_NoGamer_control-Male_NoGamer_exp)
+
+#Female NoGamer
+#Control Group
+FeMale_NoGamer_control <- nrow(filter(control,control$gender =='0' & control$gamer == '0' & control$purchase == '1'))/nrow(filter(control,control$gender =='0'& control$gamer == '0'))
+#Exp Group
+FeMale_NoGamer_exp <- nrow(filter(exp,exp$gender == '0'& exp$gamer == '0' & exp$purchase == '1'))/nrow(filter(exp,exp$gamer == '0' & exp$gender == '0'))
+#ABS %
+abs(FeMale_NoGamer_control-FeMale_NoGamer_exp)
+
+
+```
+
+
+# Question Three
+```{r}
+#3a
+Control_Rev <- nrow(filter(control,control$purchase == '1'))*37.5
+Exp_Rev <- nrow(filter(exp,exp$purchase == '1'))*12.5
+
+#3b
+Male_Control_Rev <- nrow(filter(control,control$purchase == '1' & control$gender == '1'))*37.5
+Male_Exp_Rev <- nrow(filter(exp,exp$purchase == '1' & exp$gender == '1'))*12.5
+```
+
+
+# Question Four
+Based on the evluation on Question two, in each segment, the absolute diff between the control and test group is less than 10%. There is not a significance number showing that this ads runs really well. Therefore, I wouldn't suggest to run the promotion again. Especially by considering the company could only earn 12.5 dollars on average for promoted customer. 
